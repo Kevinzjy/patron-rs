@@ -8,7 +8,7 @@
             "request": "launch",
             "target": "${workspaceFolder}/target/debug/patron",
             "cwd": "${workspaceFolder}",
-            "arguments": "-n 4 -r /home/zhangjy/data/01.ONT_methods/full_spectrum_Sequencing/FullSpeed/small.fastq /home/zhangjy/data/01.ONT_methods/full_spectrum_Sequencing/FullSpeed/Normal_12h.fastq.gz",
+            "arguments": "-n 4 -r /home/zhangjy/data/01.ONT_methods/full_spectrum_Sequencing/FullSpeed/Normal_12h.fastq.gz /home/zhangjy/data/01.ONT_methods/full_spectrum_Sequencing/FullSpeed/Normal_12h.fastq.gz",
             "env": {
                 "RUST_LOG": "info",
                 "RUST_BACKTRACE": 1,

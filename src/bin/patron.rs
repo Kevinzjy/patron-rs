@@ -51,7 +51,7 @@ fn main() -> Result<(), Error> {
     // Init logger
     pretty_env_logger::init_timed();
 
-    info!("Start running PATRON-RS");
+    info!("Start running PATRON");
 
     // Generate index from reference fasta
     let reference = Path::new(&args.flag_r);
@@ -61,6 +61,8 @@ fn main() -> Result<(), Error> {
     }
 
     build_index::read_transcripts(&reference);
+
+    info!("Finished!");
 
     Ok(())
 }

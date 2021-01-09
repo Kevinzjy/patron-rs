@@ -1,69 +1,59 @@
+use log::{info, error};
+
 use debruijn::Kmer;
-use std::num::Wrapping;
+use debruijn::dna_string::*;
+use debruijn::kmer::{Kmer10, Kmer15};
+use debruijn::Vmer;
 
-use debruijn::kmer::Kmer10;
-use debruijn::kmer::Kmer15;
+pub fn split_reads(seq: &DnaString) -> Vec<Kmer10> {
+    let mask = (1 << 2 * 10) - 1;
+    let mut markers: Vec<Kmer10> = Vec::new();
 
-
-pub fn hash64(){
-    let mask = 1 << 2 * 10 - 1;
-    println! {"Mask: {}", mask};
-
-    let kmer = Kmer10::from_u64(2283182);
-    println! {"Kmer: {}", kmer.to_string()};
-
-    let mut key = kmer.to_u64();
-    println! {"Hash: {}", &key};
-
-    println! {"Test: {}", (!key + (key << 21)) & mask};
-
-    key = (!key + (key << 21)) & mask;
-    println! {"Hash: {}", &key};
-    key = key ^ key >> 24;
-    println! {"Hash: {}", &key};
-    key = ((key + (key << 3)) + (key << 8)) & mask;
-    println! {"Hash: {}", &key};
-    key = key ^ key >> 14;
-    println! {"Hash: {}", &key};
-    key = ((key + (key << 2)) + (key << 4)) & mask;
-    println! {"Hash: {}", &key};
-    key = key ^ key >> 28;
-    println! {"Hash: {}", &key};
-    key = (key + (key << 31)) & mask;
-    println! {"Hash: {}", key};
+    for offset in 0..seq.len()-15+1 {
+        let kmer: Kmer15 = seq.get_kmer(offset);
+        let minimizer = get_minimizer(kmer, &mask);
+        markers.push(minimizer);
+    }
+    markers
 }
 
-// def hash64(key, mask):
-//     """
-//     https://github.com/lh3/minimap2/blob/c9874e2dc50e32bbff4ded01cf5ec0e9be0a53dd/sketch.c
-//     """
-//     key = ~key + (key << 21) & mask
-//     key = key ^ key >> 24
-//     key = ((key + (key << 3)) + (key << 8)) & mask
-//     key = key ^ key >> 14
-//     key = ((key + (key << 2)) + (key << 4)) & mask
-//     key = key ^ key >> 28
-//     key = (key + (key << 31)) & mask
-//     return key
+pub fn get_minimizer(kmer: Kmer15, mask: &u64) -> Kmer10 {
+    let kseq = kmer.to_string();
+    let kstr = DnaString::from_dna_string(&kseq);
 
+    let mut minimizer: Kmer10 = kstr.get_kmer(0);
+    let mut minhash: u64 = hash64(minimizer.to_u64(), mask);
+    for i in 1..15-10+1 {
+        let cand: Kmer10 = kstr.get_kmer(i);
+        let cand_hash = hash64(cand.to_u64(), mask) << 8 | 10;
+        if cand_hash < minhash {
+            minhash = cand_hash;
+            minimizer = cand;
+        }
+    }
+    minimizer
+}
 
-// def get_minimizer(pos, bases, w):
-//     mask = (1 << 2*w) - 1
-//     minimizer = bases[0:w]
-//     min_hash = hash64(kmer_to_uint(minimizer), mask) << 8 | pos[w] - pos[0]
-//     for i in range(1, len(bases) - w):
-//         candidate = bases[i:i+w]
-//         candidate_span = pos[i+w] - pos[i]
-//         candidate_hash = hash64(kmer_to_uint(candidate), mask) << 8 | candidate_span
+fn hash64(kmer: u64, mask: &u64) -> u64 {
+    let mut key = kmer;
+    key = (!key).wrapping_add(key<<21) & mask;
+    key = key ^ (key >> 24);
+    key = ((key + (key<<3)) + (key<<8)) & mask;
+    key = key ^ (key >> 14);
+    key = ((key + (key<<2)) + (key<<4)) & mask;
+    key = key ^ (key >> 28);
+    key = (key + (key<<31)) & mask;
+    key
+}
 
-//         rev = revcomp(''.join(candidate))
-//         rev_hash = hash64(kmer_to_uint(rev), mask) << 8 | candidate_span
-
-//         if rev_hash < candidate_hash:
-//             candidate_hash = rev_hash
-//             candidate = rev
-
-//         if candidate_hash < min_hash:
-//             minimizer = candidate
-//             min_hash = candidate_hash
-//     return kmer_to_uint(minimizer)
+#[test]
+fn test_hash64() {
+    let mask = (1 << 2 * 15) - 1;
+    let test1 = DnaString::from_dna_string("AAAAAAACCCTTTTT");
+    let test2 = DnaString::from_dna_string("AAAAAGGGTTTTTTT");
+    let kmer1: Kmer15 = test1.get_kmer(0);
+    let kmer2: Kmer15 = test1.get_kmer(0);
+    let hash1 = hash64(kmer1.to_u64(), &mask);
+    let hash2 = hash64(kmer1.to_u64(), &mask);
+    assert_eq! (hash1, hash2);
+}

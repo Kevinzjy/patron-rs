@@ -1,1 +1,11 @@
 Pseudo alignment transcriptome RNA-seq of nanopore long reads
+
+```bash
+export RUSTFLAGS=-g
+cargo build --release
+perf record ./target/release/patron -n 4 -r /home/zhangjy/data/01.ONT_methods/full_spectrum_Sequencing/FullSpeed/Normal_12h.fastq.gz /home/zhangjy/data/01.ONT_methods/full_spectrum_Sequencing/FullSpeed/Normal_12h.fastq.gz
+perf report
+
+gdb record ./target/release/patron -n 4 -r /home/zhangjy/data/01.ONT_methods/full_spectrum_Sequencing/FullSpeed/Normal_12h.fastq.gz /home/zhangjy/data/01.ONT_methods/full_spectrum_Sequencing/FullSpeed/Normal_12h.fastq.gz
+
+```
