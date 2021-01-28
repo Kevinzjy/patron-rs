@@ -20,5 +20,5 @@ hashbrown = "0.3"
 rustc-hash = "1.1.0"
 
 [dependencies.rustbreak]
-version = "1"
+version = "2"
 features = ["bin_enc"]
