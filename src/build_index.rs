@@ -10,18 +10,31 @@ use crate::utils;
 use crate::kseq;
 
 use hashbrown::HashMap;
-use rustc_hash::FxHashMap;
 use debruijn::Kmer;
 use debruijn::dna_string::*;
 use debruijn::kmer::Kmer10;
 use debruijn::Vmer;
+use rustbreak::{MemoryDatabase, deser::Bincode};
+
+// let db = MemoryDatabase::<HashMap<String, String>, Ron>::memory(HashMap::new(), Ron);
+
+// println!("Writing to Database");
+// db.write(|db| {
+//     db.insert("hello".into(), String::from("world"));
+//     db.insert("foo".into(), String::from("bar"));
+// });
+
+// db.read(|db| {
+//     // db.insert("foo".into(), String::from("bar"));
+//     // The above line will not compile since we are only reading
+//     println!("Hello: {:?}", db.get("hello"));
+// });
 
 pub fn read_transcripts (file_name: &Path) {
     let buf_reader = utils::read_fastq(file_name).unwrap();
     let reader = fastq::Reader::new(buf_reader);
 
-    // let mut kmer_index = HashMap::<u64, Vec<String>>::default();
-    let mut kmer_index: FxHashMap<u64, Vec<String>> = FxHashMap::default();
+    let mut kmer_index = HashMap::<u64, Vec<String>>::default();
 
     let mut n = 1;
     for result in reader.records() {
@@ -31,8 +44,8 @@ pub fn read_transcripts (file_name: &Path) {
             continue;
         }
 
-        let seq = DnaString::from_acgt_bytes(&record.seq());
-        let minimizers = kseq::split_reads(&seq);
+        let seq = DnaString::from_acgt_bytes(record.seq());
+        let minimizers = kseq::split_reads(seq);
 
         for x in minimizers {
             kmer_index.entry(x.to_u64())
@@ -41,7 +54,7 @@ pub fn read_transcripts (file_name: &Path) {
         }
 
         n += 1;
-        if n >= 1_000_000 {
+        if n >= 1_000 {
             break;
         }
     }

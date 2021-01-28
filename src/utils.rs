@@ -6,10 +6,8 @@ use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
 use log::{info, error};
 
-
 use flate2::read::MultiGzDecoder;
 use failure::Error;
-
 
 pub fn read_fastq (file_name: &Path) -> Result<Box<dyn BufRead>, Error> {
     if file_name.extension().unwrap() == "gz" {
@@ -26,13 +24,11 @@ fn _read_fastq_gz (file_name: &Path) -> Result<Box<dyn BufRead>, Error> {
     Ok(Box::new(buf_reader))
 }
 
-
 fn _read_fastq (file_name: &Path) -> Result<Box<dyn BufRead>, Error> {
     let fastq_fn = File::open(file_name).unwrap();
     let buf_reader = BufReader::with_capacity(32*1024, fastq_fn);
     Ok(Box::new(buf_reader))
 }
-
 
 fn calculate_hash<T: Hash>(t: &T) -> u64 {
     let mut s = DefaultHasher::new();

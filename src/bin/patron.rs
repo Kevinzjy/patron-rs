@@ -7,7 +7,7 @@ use serde::Deserialize;
 use docopt::Docopt;
 use failure::Error;
 
-use patron::{build_index, utils, kseq};
+use patron::{build_index, utils, kseq, kmer};
 
 const PKG_NAME: &'static str = env!("CARGO_PKG_NAME");
 const PKG_VERSION: &'static str = env!("CARGO_PKG_VERSION");

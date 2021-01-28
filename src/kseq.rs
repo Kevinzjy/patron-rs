@@ -5,7 +5,7 @@ use debruijn::dna_string::*;
 use debruijn::kmer::{Kmer10, Kmer15};
 use debruijn::Vmer;
 
-pub fn split_reads(seq: &DnaString) -> Vec<Kmer10> {
+pub fn split_reads(seq: DnaString) -> Vec<Kmer10> {
     let mask = (1 << 2 * 10) - 1;
     let mut markers: Vec<Kmer10> = Vec::new();
 
@@ -34,6 +34,8 @@ pub fn get_minimizer(kmer: Kmer15, mask: &u64) -> Kmer10 {
     minimizer
 }
 
+/// Hash function from minimap2
+/// https://github.com/lh3/minimap2/blob/master/sketch.c
 fn hash64(kmer: u64, mask: &u64) -> u64 {
     let mut key = kmer;
     key = (!key).wrapping_add(key<<21) & mask;
