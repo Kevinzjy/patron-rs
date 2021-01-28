@@ -1,9 +1,1 @@
-[source.crates-io]
-replace-with = "vendored-sources"
 
-[source."https://github.com/10XGenomics/rust-debruijn"]
-git = "https://github.com/10XGenomics/rust-debruijn"
-replace-with = "vendored-sources"
-
-[source.vendored-sources]
-directory = "vendor"
