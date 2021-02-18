@@ -1,14 +1,21 @@
 // Utilities
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::fmt::Display;
+use std::io::{BufRead, BufWriter, BufReader};
 use std::path::Path;
 use std::hash::{Hash, Hasher};
+use std::collections::HashMap;
 use std::collections::hash_map::DefaultHasher;
-use log::{info, error};
+use std::process;
 
-use flate2::read::MultiGzDecoder;
+use bincode;
+use chrono::Local;
+use flate2::Compression;
+use flate2::write::ZlibEncoder;
+use flate2::read::{ZlibDecoder, MultiGzDecoder};
 use failure::Error;
 
+// Reading Fastq
 pub fn read_fastq (file_name: &Path) -> Result<Box<dyn BufRead>, Error> {
     if file_name.extension().unwrap() == "gz" {
         _read_fastq_gz(file_name)
@@ -30,8 +37,64 @@ fn _read_fastq (file_name: &Path) -> Result<Box<dyn BufRead>, Error> {
     Ok(Box::new(buf_reader))
 }
 
+// Calculate Hash values
 fn calculate_hash<T: Hash>(t: &T) -> u64 {
     let mut s = DefaultHasher::new();
     t.hash(&mut s);
     s.finish()
+}
+
+// Serialize alignment index
+pub fn save_index(file_name: &Path, data: &HashMap::<u64, Vec<String>>) {
+    let writer = BufWriter::new(File::create(file_name).unwrap());
+    let mut encoder = ZlibEncoder::new(writer, Compression::best());
+    bincode::serialize_into(&mut encoder, &data).unwrap();
+}
+
+pub fn load_index(file_name: &Path) -> HashMap::<u64, Vec<String>> {
+    let reader = BufReader::new(File::open(file_name).unwrap());
+    let mut decoder = ZlibDecoder::new(reader);
+    let decoded = bincode::deserialize_from(&mut decoder).unwrap();
+    decoded
+}
+
+// A simple logging function
+pub fn debug<T: Display> (info: T) {
+    _logger("DEBUG", info);
+}
+
+pub fn info<T: Display> (info: T) {
+    _logger("INFO", info);
+}
+
+pub fn warn<T: Display> (info: T) {
+    _logger("WARN", info);
+}
+
+pub fn error<T: Display> (info: T) {
+    _logger("ERROR", info);
+    panic! ("Error occured!");
+}
+
+fn _logger<T: Display> (level: &str, info: T) {
+    let date = Local::now();
+    eprintln!("[{}] |{:5}| - {}", date.format("%a %Y-%m-%d %H:%M:%S"), level, info);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_logger() {
+        debug(String::from("Debugging"));
+        info("Information");
+        warn("Warning");
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_error() {
+        error("Test error");
+    }
 }

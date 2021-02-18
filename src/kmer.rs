@@ -1,6 +1,5 @@
 use std::str;
 use std::mem;
-use log::{info, error};
 
 use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian, LittleEndian};
 
@@ -39,7 +38,7 @@ pub fn kmer_to_uint(kmer: String) {
             67 => res += 1, // C
             71 => res += 2, // G
             84 => res += 3, // T
-            _ => error! ("Illegal base: {:?}", base),
+            _ => println!("Illegal base: {:?}", base),
         }
         println!("{:020b}", res);
     }

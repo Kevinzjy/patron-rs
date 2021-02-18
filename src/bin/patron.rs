@@ -1,5 +1,4 @@
 use std::path::Path;
-use log::{info, error};
 use serde::Deserialize;
 
 // extern crate bio;
@@ -7,7 +6,7 @@ use serde::Deserialize;
 use docopt::Docopt;
 use failure::Error;
 
-use patron::{build_index, utils, kseq, kmer};
+use patron::{build_index, utils};
 
 const PKG_NAME: &'static str = env!("CARGO_PKG_NAME");
 const PKG_VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -44,25 +43,23 @@ fn main() -> Result<(), Error> {
         .unwrap_or_else(|e| e.exit());
 
     if args.flag_version {
-        println! {"{} {}", PKG_NAME, PKG_VERSION};
+        print! ("{} {}", PKG_NAME, PKG_VERSION);
         return Ok(());
     }
 
     // Init logger
-    pretty_env_logger::init_timed();
-
-    info!("Start running PATRON");
+    utils::info("Start running PATRON");
 
     // Generate index from reference fasta
     let reference = Path::new(&args.flag_r);
     match reference.exists() {
-        true => info! ("Loading fastq reads"),
-        false => error! ("Can not find file: {}", &args.flag_r),
+        true => utils::info("Loading fastq reads"),
+        false => utils::error(format!("Can not find file: {}", &args.flag_r)),
     }
 
     build_index::read_transcripts(&reference);
 
-    info!("Finished!");
+    utils::info("Finished!");
 
     Ok(())
 }

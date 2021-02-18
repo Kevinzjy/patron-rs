@@ -1,5 +1,3 @@
-use log::{info, error};
-
 use debruijn::Kmer;
 use debruijn::dna_string::*;
 use debruijn::kmer::{Kmer10, Kmer15};

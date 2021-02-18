@@ -1,34 +1,17 @@
 // Build pseudo index
 use std::path::Path;
-// use std::collections::HashMap;
-use std::hash::BuildHasherDefault;
-use log::{info, error};
+use std::collections::HashMap;
 
 use bio::io::{fasta, fastq};
 
-use crate::utils;
-use crate::kseq;
-
-use hashbrown::HashMap;
 use debruijn::Kmer;
 use debruijn::dna_string::*;
 use debruijn::kmer::Kmer10;
 use debruijn::Vmer;
-use rustbreak::{MemoryDatabase, deser::Bincode};
 
-// let db = MemoryDatabase::<HashMap<String, String>, Ron>::memory(HashMap::new(), Ron);
+use crate::utils;
+use crate::kseq;
 
-// println!("Writing to Database");
-// db.write(|db| {
-//     db.insert("hello".into(), String::from("world"));
-//     db.insert("foo".into(), String::from("bar"));
-// });
-
-// db.read(|db| {
-//     // db.insert("foo".into(), String::from("bar"));
-//     // The above line will not compile since we are only reading
-//     println!("Hello: {:?}", db.get("hello"));
-// });
 
 pub fn read_transcripts (file_name: &Path) {
     let buf_reader = utils::read_fastq(file_name).unwrap();
@@ -54,14 +37,24 @@ pub fn read_transcripts (file_name: &Path) {
         }
 
         n += 1;
-        if n >= 1_000 {
+        if n >= 1_000_000 {
             break;
         }
     }
-    info! ("Loaded {} reads", n);
+    utils::info(format!("Loaded {} reads", n));
     let test_seq = DnaString::from_dna_string("AACCTCTCCA");
     let test_kmer: Kmer10 = test_seq.get_kmer(0);
     let test_key = &test_kmer.to_u64();
     let read_ids = kmer_index.get(&test_key).unwrap();
-    println! ("Kmer: {}, host reads: {:?}", test_kmer.to_string(), read_ids.len());
+    utils::debug(format!("Kmer: {}, host reads: {:?}", test_kmer.to_string(), read_ids.len()));
+
+    utils::info("Save index to file");
+    let db_name = Path::new("/tmp/test.db");
+    utils::save_index(&db_name, &kmer_index);
+
+    utils::info("Load index from file");
+
+    let new_db = utils::load_index(&db_name);
+    let new_ids = new_db.get(&test_key).unwrap();
+    utils::debug(format!("Kmer: {}, host reads: {:?}", test_kmer.to_string(), new_ids.len()));
 }
