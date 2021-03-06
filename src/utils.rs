@@ -4,7 +4,7 @@ use std::fmt::Display;
 use std::io::{BufRead, BufWriter, BufReader};
 use std::path::Path;
 use std::hash::{Hash, Hasher};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::collections::hash_map::DefaultHasher;
 use std::process;
 
@@ -16,22 +16,22 @@ use flate2::read::{ZlibDecoder, MultiGzDecoder};
 use failure::Error;
 
 // Reading Fastq
-pub fn read_fastq (file_name: &Path) -> Result<Box<dyn BufRead>, Error> {
+pub fn read_fastx (file_name: &Path) -> Result<Box<dyn BufRead>, Error> {
     if file_name.extension().unwrap() == "gz" {
-        _read_fastq_gz(file_name)
+        _read_fastx_gz(file_name)
     } else {
-        _read_fastq(file_name)
+        _read_fastx(file_name)
     }
 }
 
-fn _read_fastq_gz (file_name: &Path) -> Result<Box<dyn BufRead>, Error> {
+fn _read_fastx_gz (file_name: &Path) -> Result<Box<dyn BufRead>, Error> {
     let fastq_fn = File::open(file_name).unwrap();
     let gz = MultiGzDecoder::new(fastq_fn);
     let buf_reader = BufReader::with_capacity(32*1024, gz);
     Ok(Box::new(buf_reader))
 }
 
-fn _read_fastq (file_name: &Path) -> Result<Box<dyn BufRead>, Error> {
+fn _read_fastx (file_name: &Path) -> Result<Box<dyn BufRead>, Error> {
     let fastq_fn = File::open(file_name).unwrap();
     let buf_reader = BufReader::with_capacity(32*1024, fastq_fn);
     Ok(Box::new(buf_reader))
@@ -45,13 +45,13 @@ fn calculate_hash<T: Hash>(t: &T) -> u64 {
 }
 
 // Serialize alignment index
-pub fn save_index(file_name: &Path, data: &HashMap::<u64, Vec<String>>) {
+pub fn save_index(file_name: &Path, data: &HashMap::<u64, HashSet<String>>) {
     let writer = BufWriter::new(File::create(file_name).unwrap());
-    let mut encoder = ZlibEncoder::new(writer, Compression::best());
+    let mut encoder = ZlibEncoder::new(writer, Compression::default());
     bincode::serialize_into(&mut encoder, &data).unwrap();
 }
 
-pub fn load_index(file_name: &Path) -> HashMap::<u64, Vec<String>> {
+pub fn load_index(file_name: &Path) -> HashMap::<u64, HashSet<String>> {
     let reader = BufReader::new(File::open(file_name).unwrap());
     let mut decoder = ZlibDecoder::new(reader);
     let decoded = bincode::deserialize_from(&mut decoder).unwrap();

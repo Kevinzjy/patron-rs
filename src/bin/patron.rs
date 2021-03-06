@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::collections::HashMap;
 use serde::Deserialize;
 
 // extern crate bio;
@@ -6,7 +7,7 @@ use serde::Deserialize;
 use docopt::Docopt;
 use failure::Error;
 
-use patron::{build_index, utils};
+use patron::{build_index, align, utils};
 
 const PKG_NAME: &'static str = env!("CARGO_PKG_NAME");
 const PKG_VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -51,15 +52,29 @@ fn main() -> Result<(), Error> {
     utils::info("Start running PATRON");
 
     // Generate index from reference fasta
-    let reference = Path::new(&args.flag_r);
-    match reference.exists() {
-        true => utils::info("Loading fastq reads"),
-        false => utils::error(format!("Can not find file: {}", &args.flag_r)),
+    let pseudo_index;
+    let idx_file = Path::new("/tmp/test.db");
+    if idx_file.exists() {
+        utils::info("Loading pre-built index");
+        pseudo_index = utils::load_index(idx_file);
+    } else {
+        let reference = Path::new(&args.flag_r);
+        match reference.exists() {
+            true => utils::info("Building index"),
+            false => utils::error(format!("Can not find file: {}", &args.flag_r)),
+        }
+        pseudo_index = build_index::read_transcripts(&reference);
     }
+    
+    // Align reads
+    let reads = Path::new(&args.arg_reads);
+    match reads.exists() {
+        true => utils::info("Mapping reads"),
+        false => utils::error(format!("Can not find file: {}", &args.arg_reads)),
+    }
+    align::align_reads(&reads, pseudo_index);
 
-    build_index::read_transcripts(&reference);
-
-    utils::info("Finished!");
-
+    // GC
+    utils::info("All Finished!");
     Ok(())
 }
